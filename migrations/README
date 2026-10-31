@@ -1,0 +1,3 @@
+# Flask-Migrate directory
+
+Run `flask --app app db upgrade` after configuring PostgreSQL. The initial revision creates users, reports, and collection_requests.

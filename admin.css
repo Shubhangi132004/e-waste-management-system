@@ -1,0 +1,5 @@
+
+.admin-heading { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; }
+.empty-state { padding:2rem; text-align:center; color:#64748b; }
+#reportsTable { display:block; overflow-x:auto; }
+@media (max-width: 700px) { .chart-card { width:100%; } .search-box { width:100%; } }
