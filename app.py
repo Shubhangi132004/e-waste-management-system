@@ -2,6 +2,7 @@ import os
 import secrets
 from datetime import date
 from functools import wraps
+from io import BytesIO
 from pathlib import Path
 from uuid import uuid4
 
@@ -9,10 +10,13 @@ from flask import Flask, jsonify, redirect, request, send_from_directory, sessio
 from flask_cors import CORS
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from flask_migrate import Migrate
-from sqlalchemy import func
+from PIL import Image, ImageOps, UnidentifiedImageError
+from sqlalchemy import func, text
+from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
+from ai.category_classifier import get_classifier
 from config import Config
 from models import CollectionRequest, Report, User, db
 
@@ -135,6 +139,15 @@ def create_app(config_object=Config):
     def csrf_endpoint():
         return jsonify(csrf_token=csrf_token())
 
+    @app.get("/api/health")
+    def health():
+        try:
+            db.session.execute(text("SELECT 1"))
+        except SQLAlchemyError:
+            app.logger.exception("Database health check failed")
+            return jsonify(status="error", database="unavailable"), 503
+        return jsonify(status="ok", database="connected")
+
     @app.post("/api/auth/register")
     @csrf_protected
     def register():
@@ -200,8 +213,33 @@ def create_app(config_object=Config):
         extension = Path(secure_filename(file.filename)).suffix.lower().lstrip(".")
         if extension not in app.config["ALLOWED_EXTENSIONS"]:
             raise ValueError("Only JPG, JPEG, PNG, WEBP, and GIF images are allowed.")
+        expected_format = {"jpg": "JPEG", "jpeg": "JPEG", "png": "PNG", "webp": "WEBP", "gif": "GIF"}[extension]
+        try:
+            image = Image.open(file.stream)
+            if image.format != expected_format:
+                raise ValueError("The image contents do not match the file extension.")
+            if image.width * image.height > 30_000_000:
+                raise ValueError("Image dimensions are too large; use an image under 30 megapixels.")
+            image = ImageOps.exif_transpose(image)
+            image.load()
+            if image.format == "JPEG":
+                if image.mode not in ("RGB", "L"):
+                    image = image.convert("RGB")
+            elif image.format in ("PNG", "WEBP") and image.mode not in ("RGB", "RGBA", "L"):
+                image = image.convert("RGBA")
+            elif image.format == "GIF":
+                image.seek(0)
+            safe_image = BytesIO()
+            save_options = {"optimize": True} if expected_format in {"JPEG", "PNG", "GIF"} else {}
+            image.save(safe_image, format=expected_format, **save_options)
+        except ValueError:
+            raise
+        except (UnidentifiedImageError, OSError, EOFError, Image.DecompressionBombError) as error:
+            raise ValueError("The uploaded file is not a valid supported image.") from error
+        safe_image.seek(0)
         filename = f"{uuid4().hex}.{extension}"
-        file.save(app.config["UPLOAD_FOLDER"] / filename)
+        with (app.config["UPLOAD_FOLDER"] / filename).open("wb") as destination:
+            destination.write(safe_image.getvalue())
         return filename
 
     @app.route("/uploads/<filename>")
@@ -247,7 +285,38 @@ def create_app(config_object=Config):
         resolved = db.session.scalar(db.select(func.count(Report.id)).where(Report.status == "Resolved")) or 0
         by_status = [{"status": status, "total": db.session.scalar(db.select(func.count(Report.id)).where(Report.status == status)) or 0} for status in app.config["ALLOWED_STATUSES"]]
         category_rows = db.session.execute(db.select(Report.issue_type, func.count(Report.id)).group_by(Report.issue_type)).all()
-        return jsonify(total_reported=total, pending=pending, in_progress=in_progress, resolved=resolved, bins_monitored=None, status=by_status, issues=[{"issue_type": category, "total": count} for category, count in category_rows])
+        recent_reports = db.session.scalars(db.select(Report).order_by(Report.created_at.desc()).limit(5)).all()
+        recent = [
+            {"id": item.id, "issue_type": item.issue_type, "status": item.status, "created_at": item.created_at.isoformat()}
+            for item in recent_reports
+        ]
+        return jsonify(
+            total_reported=total,
+            pending=pending,
+            in_progress=in_progress,
+            resolved=resolved,
+            categories_supported=len(app.config["ALLOWED_CATEGORIES"]),
+            status=by_status,
+            issues=[{"issue_type": category, "total": count} for category, count in category_rows],
+            recent_reports=recent,
+        )
+
+    @app.get("/api/ai/model")
+    def ai_model_info():
+        return jsonify(get_classifier().metadata())
+
+    @app.post("/api/ai/suggest-category")
+    @csrf_protected
+    def ai_suggest_category():
+        data = request.get_json(silent=True) or {}
+        description = str(data.get("text", "")).strip()
+        if len(description) > 2000:
+            return json_error("Description must be 2000 characters or fewer.")
+        try:
+            suggestion = get_classifier().predict(description)
+        except ValueError as error:
+            return json_error(str(error))
+        return jsonify(suggestion)
 
     @app.get("/api/admin/reports")
     @admin_required

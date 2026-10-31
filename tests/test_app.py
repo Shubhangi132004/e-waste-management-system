@@ -2,6 +2,7 @@ import io
 from datetime import date, timedelta
 
 import pytest
+from PIL import Image
 
 from app import create_app
 from config import TestConfig
@@ -58,7 +59,12 @@ def test_duplicate_registration_and_login(client):
 def test_report_validation_and_creation(client):
     response = client.post("/api/reports", data={"name": "", "location": "", "issue_type": "Unknown"}, headers={"X-CSRFToken": csrf(client)})
     assert response.status_code == 400
-    response = client.post("/api/reports", data={"name": "Reporter", "location": "Pune", "issue_type": "Laptops", "description": "Old device", "image": (io.BytesIO(b"fake image"), "device.png")}, content_type="multipart/form-data", headers={"X-CSRFToken": csrf(client)})
+    invalid = client.post("/api/reports", data={"name": "Reporter", "location": "Pune", "issue_type": "Laptops", "image": (io.BytesIO(b"fake image"), "device.png")}, content_type="multipart/form-data", headers={"X-CSRFToken": csrf(client)})
+    assert invalid.status_code == 400
+    valid_image = io.BytesIO()
+    Image.new("RGB", (2, 2), color="green").save(valid_image, format="PNG")
+    valid_image.seek(0)
+    response = client.post("/api/reports", data={"name": "Reporter", "location": "Pune", "issue_type": "Laptops", "description": "Old device", "image": (valid_image, "device.png")}, content_type="multipart/form-data", headers={"X-CSRFToken": csrf(client)})
     assert response.status_code == 201
     assert response.get_json()["issue_id"] == 1
 
@@ -67,9 +73,21 @@ def test_report_retrieval_and_stats(client):
     register(client)
     client.post("/api/reports", data={"name": "Reporter", "location": "Pune", "issue_type": "Batteries"}, headers={"X-CSRFToken": csrf(client)})
     assert len(client.get("/api/reports").get_json()["reports"]) == 1
-    stats = client.get("/api/stats").get_json()
+    stats_response = client.get("/api/stats")
+    stats = stats_response.get_json()
     assert stats["total_reported"] == 1
     assert stats["pending"] == 1
+    assert len(stats["recent_reports"]) == 1
+    assert "Reporter" not in stats_response.get_data(as_text=True)
+    assert "Pune" not in stats_response.get_data(as_text=True)
+
+
+def test_homepage_and_frontend_assets_are_served(client):
+    homepage = client.get("/")
+    assert homepage.status_code == 200
+    assert b"aiSuggestBtn" in homepage.data
+    assert client.get("/style.css").status_code == 200
+    assert client.get("/script.js").status_code == 200
 
 
 def test_admin_access_and_report_management(client, app):
@@ -93,3 +111,26 @@ def test_collection_request(client):
     response = client.post("/api/collections", json=payload, headers={"X-CSRFToken": csrf(client)})
     assert response.status_code == 201
     assert len(client.get("/api/collections").get_json()["collection_requests"]) == 1
+
+
+def test_ai_category_suggestion_requires_csrf_and_returns_local_model_result(client):
+    payload = {"text": "My smartphone has a cracked screen and no longer turns on."}
+    denied = client.post("/api/ai/suggest-category", json=payload)
+    assert denied.status_code == 400
+    response = client.post("/api/ai/suggest-category", json=payload, headers={"X-CSRFToken": csrf(client)})
+    assert response.status_code == 200
+    result = response.get_json()
+    assert result["suggested_category"] == "Mobile Phones"
+    assert result["model"] == "ewaste-tfidf-logreg-v1"
+    assert len(result["alternatives"]) == 3
+
+
+def test_ai_model_metadata_and_database_health(client):
+    health = client.get("/api/health")
+    assert health.status_code == 200
+    assert health.get_json()["database"] == "connected"
+    model = client.get("/api/ai/model")
+    assert model.status_code == 200
+    metadata = model.get_json()
+    assert metadata["library"] == "scikit-learn"
+    assert metadata["training_examples"] >= 80

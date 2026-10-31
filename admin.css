@@ -1,5 +1,30 @@
-
-.admin-heading { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; }
-.empty-state { padding:2rem; text-align:center; color:#64748b; }
-#reportsTable { display:block; overflow-x:auto; }
-@media (max-width: 700px) { .chart-card { width:100%; } .search-box { width:100%; } }
+/* Administrative dashboard styles using the public site's green design tokens. */
+.admin-heading { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin: 2rem 0 1.25rem; }
+.admin-heading h1 { margin: 0; font-family: Syne, Arial, sans-serif; font-size: clamp(1.7rem, 4vw, 2.5rem); }
+.section-title { margin: 2.2rem 0 1rem; font-family: Syne, Arial, sans-serif; }
+.chart-container { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+.chart-card { min-width:0; min-height:300px; padding:1.25rem; border:1px solid var(--c-border); border-radius:var(--radius-md); background:var(--c-surface); box-shadow:var(--shadow-sm); }
+.chart-card canvas { width:100% !important; height:260px !important; }
+.toolbar { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; margin:1rem 0; }
+.search-box { flex:1 1 280px; }
+.filter-box { flex:0 1 200px; }
+.export-btn, .update-btn, .delete-btn { min-height:40px; padding:.55rem .9rem; border:0; border-radius:9px; color:white; background:var(--c-accent); font-weight:700; cursor:pointer; }
+.export-btn:hover, .update-btn:hover { background:var(--c-accent-dark); }
+.delete-btn { background:#b42318; }
+#reportsTable { width:100%; border-collapse:collapse; background:var(--c-surface); border:1px solid var(--c-border); border-radius:12px; overflow:hidden; }
+#reportsTable th, #reportsTable td { padding:.8rem; border-bottom:1px solid var(--c-border); text-align:left; vertical-align:middle; }
+#reportsTable th { color:var(--c-text); background:var(--c-surface-2); font-size:.85rem; }
+#reportsTable td { color:var(--c-text); font-size:.9rem; }
+#reportsTable tr:last-child td { border-bottom:0; }
+#reportsTable td button { margin:.15rem; }
+.report-img { width:64px; height:48px; object-fit:cover; border-radius:6px; }
+.gps-btn { color:var(--c-accent); font-weight:700; }
+.status-pending { color:#9a6700 !important; font-weight:700; }
+.status-in-progress { color:#1d5fa7 !important; font-weight:700; }
+.status-resolved { color:var(--c-accent-dark) !important; font-weight:700; }
+.empty-state { padding:2rem; text-align:center; color:var(--c-text-muted); }
+@media (max-width: 760px) {
+  .chart-container { grid-template-columns:1fr; }
+  .chart-card { min-height:250px; }
+  #reportsTable { display:block; overflow-x:auto; white-space:nowrap; }
+}

@@ -10,7 +10,7 @@ The project now uses Flask-SQLAlchemy with PostgreSQL/Psycopg, Flask-Migrate, en
 
 ## C. New features
 
-User registration/login/logout, personal report retrieval, e-waste categories, collection request creation and tracking, administrator report search/filter/status/delete operations, collection-status management, live charts, empty states, and a secure CLI admin-account command were added.
+User registration/login/logout, personal report retrieval, e-waste categories, collection request creation and tracking, administrator report search/filter/status/delete operations, collection-status management, live charts, empty states, a CLI admin-account command, and an optional local text-classification suggestion were added. The public report form is connected to the Flask API, the homepage dashboard reads actual database counts, and reports do not expose submitter names or exact addresses in its public activity feed.
 
 ## D. Database
 
@@ -26,16 +26,16 @@ Configure PostgreSQL and `.env`, run the migration, create an admin, then run `p
 
 ## G. Testing
 
-Verified locally: Python compilation, JavaScript syntax checks, migration upgrade/current against a temporary SQLite database, and six pytest tests. Result: **6 passed**. A PostgreSQL server/`psql` was not available in this sandbox, so real PostgreSQL integration was not claimed as passed.
+Verified in an isolated Python environment: Python compilation, JavaScript syntax checks, Gunicorn configuration, and nine pytest tests. Result: **9 passed** using SQLite. The offline classifier's five-fold run on the bundled synthetic dataset reported 0.67 accuracy and 0.66 weighted F1; these are not estimates of real-world performance. A PostgreSQL server/`psql` was not available in this sandbox, so real PostgreSQL integration was not claimed as passed.
 
 ## H. GitHub upload
 
-Use `docs/GITHUB_UPLOAD.md`. The repository is prepared with `.gitignore`; nothing was pushed externally.
+The user previously pushed the original baseline repository to GitHub, according to the terminal history. The files in this update ZIP have **not** been pushed by this task. Use `docs/GITHUB_UPDATE.md` to overlay, check, commit, and push the improvements to the existing `main` branch.
 
 ## I. Remaining limitations
 
-The real PostgreSQL connection, Windows installation, production HTTPS, and newly generated browser screenshots remain unverified in this sandbox. The retained screenshots are from the supplied project and are labeled as reference documentation.
+The user's real PostgreSQL instance, Windows installation, production HTTPS, hosted deployment, and newly generated browser screenshots remain unverified in this sandbox. The retained screenshots are from the supplied project and should be refreshed after local testing. The AI corpus is synthetic and weak on some categories; use a representative labelled dataset before making accuracy claims. Uploaded files use the local filesystem, so hosted persistence needs separate planning. The project still needs a deliberate reuse license before others are invited to reuse it.
 
 ## J. Learning guide
 
-See `docs/LEARNING_GUIDE.md` for the Flask, SQLAlchemy, PostgreSQL, authentication, security, HTML, CSS, and JavaScript concepts used in this implementation.
+See `docs/LEARNING_GUIDE.md` for the Flask, SQLAlchemy, PostgreSQL, authentication, security, HTML, CSS, and JavaScript concepts. See `docs/AI_MODEL.md` for the classifier, evaluation, and its limitations.

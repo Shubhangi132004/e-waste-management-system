@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>EcoSmart – Smart Waste Management</title>
+  <title>EcoSmart – E-Waste Reporting and Collection</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
@@ -52,16 +52,14 @@
   <div class="hero-content">
     <div class="hero-badge">
       <span class="badge-dot"></span>
-      Smart Waste Management · Pune, India
+      E-Waste Reporting · Pune, India
     </div>
     <h1 class="hero-title">
-      Clean Cities.<br/>
-      <span class="title-accent">Smarter Waste.</span><br/>
-      Better Tomorrow.
+      Give Devices<br/>
+      <span class="title-accent">A Better Next Life.</span>
     </h1>
     <p class="hero-sub">
-      Report overflowing bins, schedule pickups, and track waste collection
-      in real-time. Together we build a cleaner, greener community.
+      Submit electronic-waste reports, request collection, and follow each report through its review status. AI can suggest a category; a person always confirms it.
     </p>
     <div class="hero-actions">
       <a href="#report" class="btn-primary btn-lg">
@@ -71,32 +69,32 @@
       <a href="#schedule" class="btn-ghost btn-lg">View Schedule</a>
     </div>
     <div class="hero-stats">
-      <div class="hero-stat"><span class="stat-n">—</span><span>Bins Tracked</span></div>
+      <div class="hero-stat"><span class="stat-n" id="heroReportCount">—</span><span>Reports submitted</span></div>
       <div class="stat-divider"></div>
-      <div class="hero-stat"><span class="stat-n">—</span><span>Pickup Rate</span></div>
+      <div class="hero-stat"><span class="stat-n">7</span><span>E-waste categories</span></div>
       <div class="stat-divider"></div>
-      <div class="hero-stat"><span class="stat-n">24h</span><span>Response Time</span></div>
+      <div class="hero-stat"><span class="stat-n">Local</span><span>AI suggestions</span></div>
     </div>
   </div>
   <div class="hero-visual">
     <div class="bin-card">
-      <div class="bin-icon">🗑️</div>
+      <div class="bin-icon">📱</div>
       <div class="bin-info">
-        <span class="bin-label">Sector 14, Pimpri</span>
-        <div class="bin-bar"><div class="bin-fill" style="width:72%"></div></div>
-        <span class="bin-pct">72% Full</span>
+        <span class="bin-label">Example report · Smartphone</span>
+        <div class="bin-bar"><div class="bin-fill" style="width:100%"></div></div>
+        <span class="bin-pct">Category confirmed by the user</span>
       </div>
     </div>
     <div class="bin-card bin-card-2">
-      <div class="bin-icon">♻️</div>
+      <div class="bin-icon">💻</div>
       <div class="bin-info">
-        <span class="bin-label">MG Road, Chinchwad</span>
-        <div class="bin-bar"><div class="bin-fill green" style="width:30%"></div></div>
-        <span class="bin-pct">30% Full</span>
+        <span class="bin-label">Example workflow · Laptop</span>
+        <div class="bin-bar"><div class="bin-fill green" style="width:65%"></div></div>
+        <span class="bin-pct">Submitted → review → collection</span>
       </div>
     </div>
-    <div class="floating-chip chip-1">✅ Pickup Scheduled</div>
-    <div class="floating-chip chip-2">🚛 Truck En Route</div>
+    <div class="floating-chip chip-1">✓ Human-confirmed category</div>
+    <div class="floating-chip chip-2">♻ Collection request workflow</div>
   </div>
 </section>
 
@@ -142,6 +140,8 @@
         <div class="form-group full-width">
           <label for="description">Description <span class="opt">(optional)</span></label>
           <textarea id="description" name="description" rows="3" placeholder="Describe the issue in a few words…"></textarea>
+          <button type="button" class="btn-ghost ai-suggest-button" id="aiSuggestBtn">Suggest a category with local AI</button>
+          <p id="aiSuggestion" class="ai-suggestion" aria-live="polite"></p>
         </div>
         <div class="form-group full-width">
             <label for="image">Upload Image</label>
@@ -149,7 +149,7 @@
                 type="file"
                 id="image"
                 name="image"
-                accept="image/*">
+                accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif">
         </div>
         
         <div class="form-group full-width">
@@ -176,17 +176,18 @@
           <span class="btn-text">Submit Report</span>
           <span class="btn-loader hidden">⏳ Submitting…</span>
         </button>
+        <p class="demo-notice">Academic demonstration only. Use sample details; this is not a live municipal collection service.</p>
       </form>
     </div>
   </div>
 </section>
 
 <!-- ===== SUCCESS POPUP ===== -->
-<div class="popup-overlay" id="popup">
+<div class="popup-overlay" id="popup" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
   <div class="popup-card">
     <div class="popup-icon">✅</div>
-    <h3>Report Submitted!</h3>
-    <p>Thank you for helping keep our city clean. Our team will respond within 24 hours.</p>
+    <h3 id="popupTitle">Report Submitted!</h3>
+    <p>Your demo report was saved. An administrator can review its status.</p>
     <div class="popup-id" id="popupId"></div>
     <button class="btn-primary" onclick="closePopup()">Got it!</button>
   </div>
@@ -196,47 +197,46 @@
 <section class="section schedule-section" id="schedule">
   <div class="container">
     <div class="section-header">
-      <span class="section-tag">Collection Schedule</span>
-      <h2>Weekly Pickup <span class="accent">Timetable</span></h2>
-      <p>Find out when waste collection happens in your zone.</p>
+      <span class="section-tag">How the demo works</span>
+      <h2>From Report to <span class="accent">Responsible Collection</span></h2>
+      <p>This prototype records requests and review statuses. It does not dispatch a real collection vehicle.</p>
     </div>
     <div class="schedule-grid">
       <div class="schedule-card">
-        <div class="sch-day">Monday</div>
-        <div class="sch-zone">Zone A – Pimpri</div>
-        <div class="sch-time">🕖 6:30 AM – 9:00 AM</div>
-        <div class="sch-type wet">Wet Waste</div>
+        <div class="sch-day">1. Describe</div>
+        <div class="sch-zone">Choose an e-waste category and describe the device or issue.</div>
+        <div class="sch-time">Optional photo and location</div>
+        <div class="sch-type wet">User report</div>
       </div>
       <div class="schedule-card">
-        <div class="sch-day">Tuesday</div>
-        <div class="sch-zone">Zone B – Chinchwad</div>
-        <div class="sch-time">🕖 7:00 AM – 10:00 AM</div>
-        <div class="sch-type dry">Dry Waste</div>
-      </div>
-      <div class="schedule-card today-card">
-        <div class="today-badge">Today</div>
-        <div class="sch-day">Wednesday</div>
-        <div class="sch-zone">Zone C – Akurdi</div>
-        <div class="sch-time">🕖 6:00 AM – 8:30 AM</div>
-        <div class="sch-type both">Both</div>
+        <div class="sch-day">2. Get a suggestion</div>
+        <div class="sch-zone">An offline text model can recommend a category from the description.</div>
+        <div class="sch-time">A person chooses the final category</div>
+        <div class="sch-type dry">Human review</div>
       </div>
       <div class="schedule-card">
-        <div class="sch-day">Thursday</div>
-        <div class="sch-zone">Zone D – Nigdi</div>
-        <div class="sch-time">🕗 7:30 AM – 10:30 AM</div>
-        <div class="sch-type wet">Wet Waste</div>
+        <div class="sch-day">3. Submit</div>
+        <div class="sch-zone">The Flask API validates and saves the report in PostgreSQL.</div>
+        <div class="sch-time">A report ID is returned</div>
+        <div class="sch-type both">Database record</div>
       </div>
       <div class="schedule-card">
-        <div class="sch-day">Friday</div>
-        <div class="sch-zone">Zone A & B</div>
-        <div class="sch-time">🕕 5:30 AM – 8:00 AM</div>
-        <div class="sch-type dry">Dry Waste</div>
+        <div class="sch-day">4. Review</div>
+        <div class="sch-zone">An administrator reviews new reports and updates their status.</div>
+        <div class="sch-time">Pending → In Progress → Resolved</div>
+        <div class="sch-type wet">Admin workflow</div>
       </div>
       <div class="schedule-card">
-        <div class="sch-day">Saturday</div>
-        <div class="sch-zone">All Zones</div>
-        <div class="sch-time">🕗 7:00 AM – 12:00 PM</div>
-        <div class="sch-type both">Both</div>
+        <div class="sch-day">5. Request pickup</div>
+        <div class="sch-zone">A signed-in user can request collection and select a preferred date.</div>
+        <div class="sch-time">The request is stored for admin follow-up</div>
+        <div class="sch-type dry">Collection request</div>
+      </div>
+      <div class="schedule-card">
+        <div class="sch-day">6. Track</div>
+        <div class="sch-zone">Users can view their own reports and collection requests after signing in.</div>
+        <div class="sch-time">Demo workflow; no real dispatch integration</div>
+        <div class="sch-type both">Status tracking</div>
       </div>
     </div>
   </div>
@@ -246,49 +246,45 @@
 <section class="section awareness-section" id="awareness">
   <div class="container">
     <div class="section-header">
-      <span class="section-tag">Waste Awareness</span>
-      <h2>Know Your <span class="accent">Waste</span></h2>
-      <p>Proper segregation is the first step towards a cleaner planet.</p>
+      <span class="section-tag">E-waste awareness</span>
+      <h2>Prepare Devices for <span class="accent">Their Next Step</span></h2>
+      <p>Check repair and reuse options, protect personal data, and use an authorised collection or recycling route.</p>
     </div>
     <div class="awareness-grid">
       <div class="awareness-card wet-card">
-        <div class="aw-emoji">💧</div>
-        <h3>Wet Waste</h3>
-        <p class="aw-desc">Biodegradable waste that decomposes naturally.</p>
+        <div class="aw-emoji">🔧</div>
+        <h3>Repair and reuse first</h3>
+        <p class="aw-desc">If a device is still useful, consider repair, refurbishment, donation, or resale before recycling.</p>
         <ul class="aw-list">
-          <li>🥦 Fruit & vegetable peels</li>
-          <li>🍳 Cooked food leftovers</li>
-          <li>🌿 Garden / plant waste</li>
-          <li>☕ Tea bags, coffee grounds</li>
-          <li>🥚 Eggshells</li>
+          <li>Check whether the item can be repaired.</li>
+          <li>Remove SIM and memory cards.</li>
+          <li>Back up and erase personal data.</li>
+          <li>Keep chargers and devices labelled separately.</li>
         </ul>
-        <div class="aw-tip">💡 Use <strong>green bins</strong> for wet waste.</div>
+        <div class="aw-tip">Use a trusted service provider for secure data erasure.</div>
       </div>
       <div class="awareness-card dry-card">
-        <div class="aw-emoji">📦</div>
-        <h3>Dry Waste</h3>
-        <p class="aw-desc">Non-biodegradable waste that can often be recycled.</p>
+        <div class="aw-emoji">🔋</div>
+        <h3>Handle batteries carefully</h3>
+        <p class="aw-desc">Keep loose batteries separate from general waste and use an appropriate collection point.</p>
         <ul class="aw-list">
-          <li>📰 Paper, cardboard, newspapers</li>
-          <li>🍾 Plastic bottles & containers</li>
-          <li>🥫 Metal cans & tins</li>
-          <li>🪟 Glass bottles & jars</li>
-          <li>👗 Cloth & fabric scraps</li>
+          <li>Do not puncture or dismantle batteries.</li>
+          <li>Do not put e-waste in household bins.</li>
+          <li>Keep damaged or swollen batteries away from heat.</li>
+          <li>Ask an authorised collector how to hand them over.</li>
         </ul>
-        <div class="aw-tip">💡 Use <strong>blue bins</strong> for dry waste.</div>
+        <div class="aw-tip">This project does not collect or transport batteries.</div>
       </div>
       <div class="awareness-card hazard-card">
-        <div class="aw-emoji">☣️</div>
-        <h3>Hazardous Waste</h3>
-        <p class="aw-desc">Waste requiring special disposal. Never mix with regular bins.</p>
+        <div class="aw-emoji">🏛️</div>
+        <h3>Use official information</h3>
+        <p class="aw-desc">This student prototype is not a municipal or CPCB service. Check current official rules and authorised routes.</p>
         <ul class="aw-list">
-          <li>🔋 Batteries & electronics</li>
-          <li>💊 Expired medicines</li>
-          <li>🎨 Paints, chemicals</li>
-          <li>💡 Bulbs & tube lights</li>
-          <li>🧴 Aerosol cans</li>
+          <li><a href="https://cpcb.nic.in/rules-6/" target="_blank" rel="noopener">CPCB: E-Waste Management Rules</a></li>
+          <li><a href="https://eprewaste.cpcb.gov.in/assets/PDF/faqewaste.pdf" target="_blank" rel="noopener">CPCB: E-Waste Rules FAQ (PDF)</a></li>
+          <li>Confirm local collection availability independently.</li>
         </ul>
-        <div class="aw-tip">💡 Use <strong>red bins</strong> for hazardous waste.</div>
+        <div class="aw-tip">The external links are official references, not an integration.</div>
       </div>
     </div>
   </div>
@@ -299,60 +295,39 @@
   <div class="container">
     <div class="section-header">
       <span class="section-tag">Live Dashboard</span>
-      <h2>City Waste <span class="accent">At a Glance</span></h2>
-      <p>Real-time overview of waste management operations across the city.</p>
+      <h2>E-Waste Reports <span class="accent">At a Glance</span></h2>
+      <p>Live counts from this project's database. No smart-bin sensors or city operations are connected.</p>
     </div>
     <div class="dashboard-grid">
-      <div class="stat-card" data-target="0" data-id="totalReported">
+      <div class="stat-card">
         <div class="stat-icon">📋</div>
         <div class="stat-value" id="statReported">0</div>
-        <div class="stat-label">Issues Reported</div>
-        <div class="stat-trend up">↑ Live</div>
+        <div class="stat-label">Reports submitted</div>
+        <div class="stat-trend">From this database</div>
       </div>
-      <div class="stat-card" data-target="38" data-id="resolved">
+      <div class="stat-card">
+        <div class="stat-icon">🕒</div>
+        <div class="stat-value" id="statPending">0</div>
+        <div class="stat-label">Pending review</div>
+        <div class="stat-trend">Current report status</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔄</div>
+        <div class="stat-value" id="statProgress">0</div>
+        <div class="stat-label">In progress</div>
+        <div class="stat-trend">Current report status</div>
+      </div>
+      <div class="stat-card">
         <div class="stat-icon">✅</div>
         <div class="stat-value" id="statResolved">0</div>
-        <div class="stat-label">Issues Resolved</div>
-        <div class="stat-trend up">↑ +5 today</div>
-      </div>
-      <div class="stat-card" data-target="142" data-id="bins">
-        <div class="stat-icon">🗑️</div>
-        <div class="stat-value" id="statBins">0</div>
-        <div class="stat-label">Bins Monitored</div>
-        <div class="stat-trend">Across 6 zones</div>
-      </div>
-      <div class="stat-card" data-target="98" data-id="rate">
-        <div class="stat-icon">⭐</div>
-        <div class="stat-value" id="statRate">—</div>
-        <div class="stat-label">Pickup Success Rate</div>
-        <div class="stat-trend up">↑ Above average</div>
+        <div class="stat-label">Resolved</div>
+        <div class="stat-trend">Current report status</div>
       </div>
     </div>
 
     <div class="activity-section">
       <h3 class="activity-title">Recent Activity</h3>
-      <div class="activity-list" id="activityList">
-        <div class="activity-item">
-          <span class="act-dot green"></span>
-          <span class="act-text">Bin overflow resolved – Pimpri Sector 4</span>
-          <span class="act-time">2 hrs ago</span>
-        </div>
-        <div class="activity-item">
-          <span class="act-dot orange"></span>
-          <span class="act-text">Missed pickup reported – Chinchwad MG Road</span>
-          <span class="act-time">4 hrs ago</span>
-        </div>
-        <div class="activity-item">
-          <span class="act-dot green"></span>
-          <span class="act-text">Scheduled pickup completed – Akurdi Zone C</span>
-          <span class="act-time">6 hrs ago</span>
-        </div>
-        <div class="activity-item">
-          <span class="act-dot blue"></span>
-          <span class="act-text">New truck deployed – Nigdi Zone D</span>
-          <span class="act-time">8 hrs ago</span>
-        </div>
-      </div>
+      <div class="activity-list" id="activityList" aria-live="polite">Loading report activity…</div>
     </div>
   </div>
 </section>
@@ -365,6 +340,7 @@
       <form id="collectionForm" class="report-form">
         <label>Electronic-waste category<select id="collectionCategory" required><option value="">Choose a category</option><option>Mobile Phones</option><option>Laptops</option><option>Batteries</option><option>Chargers</option><option>Computer Accessories</option><option>Televisions</option><option>Other Electronic Waste</option></select></label>
         <label>Collection address<textarea id="collectionAddress" rows="2" maxlength="500" required></textarea></label>
+        <p class="demo-notice">Use fictional details in this academic demo. Do not enter a real home address.</p>
         <label>Preferred date<input id="preferredDate" type="date" required></label>
         <label>Notes <span class="opt">(optional)</span><textarea id="collectionNotes" rows="2" maxlength="1000"></textarea></label>
         <p id="collectionMessage" class="field-error" role="alert"></p><button class="btn-primary" type="submit">Request collection</button>
@@ -380,7 +356,7 @@
     <div class="footer-content">
       <div>
         <div class="nav-logo" style="margin-bottom:0.5rem">🌿 EcoSmart</div>
-        <p class="footer-tagline">Making Pune cleaner, one bin at a time.</p>
+        <p class="footer-tagline">An academic e-waste reporting and collection-workflow prototype.</p>
       </div>
       <div class="footer-links">
         <a href="#home">Home</a>
